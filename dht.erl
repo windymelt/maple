@@ -17,18 +17,22 @@ node_loop(StatePid) ->
     RandTime_Stabilization = random:uniform(1000 * ?StabilizationTime),
     receive
 	{Pid, info} ->
+	    io:fwrite("RECV: info\n"),
 	    Pid ! info,
 	    node_loop(StatePid);
 
 	{Pid, returnSuccessor} ->
+	    io:fwrite("RECV: returnSuccessor\n"),
 	    StatePid ! {self(), {work, fun(S) -> {SelfId, [SH|_], Fingers, Pred, Database} = S, Pid ! SH end}},
 	    node_loop(StatePid);
 
 	{Pid, returnPredecessor} ->
+	    io:fwrite("RECV: returnPredecessor\n"),
 	    StatePid ! {self(), {work, fun(S) -> {_, _, _, Pred, _} = S, Pid ! Pred end}},
 	    node_loop(StatePid);
 
 	{Pid, {findSuccessor, Id}} ->
+	    io:fwrite("RECV: findSuccessor"),
 	    StatePid ! {work,
 			fun(S) -> 
 				{SelfId, Successors, Fingers, Pred, Database} = S,
@@ -39,6 +43,7 @@ node_loop(StatePid) ->
 	    node_loop(StatePid);
 
 	{_, {notify, Node}} ->
+	    io:fwrite("RECV: notify"),
 	    StatePid ! {self(), {send, fun(S) -> {SelfId, _, _, Pred, _} = S,
 						 case pred_IdIsMoreReasonable(Node, SelfId, Pred) of
 						     true -> setelement(4, S, Node);
@@ -63,6 +68,7 @@ node_loop(StatePid) ->
 	%%     node_loop(StatePid);
 	
 	{_, {join, Address}} ->
+	    io:format("RECV: join ~p", [Address]),
 	    StatePid ! {work,
 			fun(S) ->
 				{SelfId, _, _, _, _} = S,
